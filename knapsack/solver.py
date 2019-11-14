@@ -4,6 +4,7 @@
 from collections import namedtuple
 Item = namedtuple("Item", ['index', 'value', 'weight'])
 
+
 def solve_it(input_data):
     # Modify this code to run your optimization algorithm
 
@@ -165,7 +166,7 @@ def solve_it(input_data):
         def create_hash_table(self):
             table = []
             for i in range(self.capacity + 1):
-                table.append(['unknown'] * (1 + len(self.items)))
+                table.append([0] + ['unknown'] * len(self.items))
             return table
 
         def table_shape(self):
@@ -207,16 +208,22 @@ def solve_it(input_data):
 
         def trace_back(self):
             remaining_capacity = self.table_shape()[0]
-            item_index = self.table_shape()[1]
-            while item_index > 1:
-                while self.table[remaining_capacity][item_index] == self.table[remaining_capacity][item_index - 1]:
+            for item_index in range(self.table_shape()[1], 0, -1):
+                if self.table[remaining_capacity][item_index] == self.table[remaining_capacity][item_index - 1]:
                     item_index -= 1
-                self.taken[item_index] = 1
-                remaining_capacity -= self.weights[item_index]
-            return self.taken[1:]
+                else:
+                    # item_index -= 1
+                    self.taken[item_index] = 1
+                    remaining_capacity -= self.weights[item_index]
+            return self.taken
 
-        def get_optimal_value(self):
-            return self.table[-1][-1]
+        def calculate_weight_value(self):
+            weight = 0
+            value = 0
+            for i in range(len(self.weights)):
+                weight += self.taken[i] * self.weights[i]
+                value += self.taken[i] * self.values[i]
+            return int(weight), int(value)
 
     # Depth First
     # d = DepthFirst(items, capacity)
@@ -226,9 +233,12 @@ def solve_it(input_data):
 
     # Dynamic Programming
     d = DynamicProgramming(items, capacity)
+    # print(d.capacity)
+    # print(d.table)
     d.populate_table()
-    value = d.get_optimal_value()
     taken = d.trace_back()
+    value, weight = d.calculate_weight_value()
+    print(weight)
 
     # prepare the solution in the specified output format
     output_data = str(value) + ' ' + str(0) + '\n'

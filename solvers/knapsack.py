@@ -185,7 +185,10 @@ class DynamicProgramming(object):
         return self.taken[1:]
 
     def get_optimal_value(self):
-        return self.table[-1][-1]
+        value = 0
+        for i in range(len(self.taken)):
+            value += self.taken[i] * self.values[i]
+        return value
 
 
 def main():
