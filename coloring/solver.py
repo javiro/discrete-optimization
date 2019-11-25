@@ -44,15 +44,11 @@ class GraphColoring(object):
                     for node in range(len(self.colors)):
                         # print("nodo", node)
                         if (node not in self.d_edges[pairs[0]]) & (self.colors[node] == -1):
-                            if node == 5:
-                                print(color)
-                                print(self.colors)
-                                print(pairs[0])
-                                print(self.d_edges[pairs[0]])
-                                # print(edge)
+                            # print(self.colors)
+                            # print(self.d_edges[pairs[0]])
+                            # print(edge)
                             self.colors[node] = color
-                            if node == 5:
-                                print(self.colors)
+                            # print(self.colors)
                     color += 1
         # print(self.colors)
 
@@ -94,8 +90,8 @@ def solve_it(input_data):
     gc.coloring()
     solution = gc.colors
     nodes, d_edges = gc.get_edges()
-    print(gc.d_edges[7])
-    print(gc.degree_sorted)
+    # print(gc.d_edges)
+    # print(gc.degree_sorted)
 
     # prepare the solution in the specified output format
     output_data = str(node_count) + ' ' + str(0) + '\n'

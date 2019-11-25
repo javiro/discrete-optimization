@@ -203,6 +203,7 @@ def output(input_file, solver_file):
     '''
 
     try:
+        print(input_file)
         pkg = __import__(solver_file[:-3]) # remove '.py' extension
         if not hasattr(pkg, 'solve_it'):
             print('the solve_it() function was not found in %s' % solver_file)
