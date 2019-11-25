@@ -40,10 +40,12 @@ class GraphColoring(object):
             for pairs in self.degree_sorted:
                 if (-1 in self.colors) & (self.colors[pairs[0]] == -1):
                     # print("pares", pairs)
+                    # print(self.d_edges[pairs[0]])
                     # self.colors[pairs[0]] = color
                     for node in range(len(self.colors)):
                         # print("nodo", node)
-                        if (node not in self.d_edges[pairs[0]]) & (self.colors[node] == -1):
+                        feasibility = self.feasibility_checking(node, color, self.colors[:node])
+                        if (node not in self.d_edges[pairs[0]]) & (self.colors[node] == -1) & feasibility:
                             # print(self.colors)
                             # print(self.d_edges[pairs[0]])
                             # print(edge)
@@ -52,12 +54,16 @@ class GraphColoring(object):
                     color += 1
         # print(self.colors)
 
-    def feasibility_checking(self):
+    def feasibility_checking(self, node, color, color_sub_array):
         """
         A constraint checks if it can be satisfied given the values in the domains of its variables.
         :return:
         """
-        pass
+        for i in range(len(color_sub_array)):
+            if self.colors[i] == color:
+                if node in self.d_edges[i]:
+                    return False
+        return True
 
     def pruning(self):
         """
@@ -89,9 +95,10 @@ def solve_it(input_data):
     gc = GraphColoring(edges)
     gc.coloring()
     solution = gc.colors
-    nodes, d_edges = gc.get_edges()
+    # nodes, d_edges = gc.get_edges()
     # print(gc.d_edges)
     # print(gc.degree_sorted)
+    node_count = len(set(solution))
 
     # prepare the solution in the specified output format
     output_data = str(node_count) + ' ' + str(0) + '\n'
@@ -99,9 +106,6 @@ def solve_it(input_data):
 
     return output_data
 
-
-
-import sys
 
 if __name__ == '__main__':
     import sys
