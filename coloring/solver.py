@@ -10,7 +10,7 @@ class GraphColoring(object):
     def __init__(self, edges):
         self.edges = edges
         self.nodes, self.d_edges = self.get_edges()
-        self.degree_dict, self.degree_sorted = self.get_degree()
+        self.degree_dict, self.degree_sorted, self.degree_sorted_reversed = self.get_degree()
         self.colors = self.get_colors()
 
     def get_colors(self):
@@ -26,25 +26,44 @@ class GraphColoring(object):
             nodes = nodes + [int(parts[0]), int(parts[1])]
         return nodes, d_edges
 
+    def get_sub_graph(self, list_of_nodes):
+        sub_graph = {n: [e for e in v if e in list_of_nodes] for n, v in self.d_edges.items()
+                     if (n in list_of_nodes) & (len([e for e in v if e in list_of_nodes]) > 0)}
+        return sub_graph
+
+    def get_list_of_feasible_nodes(self, current_node):
+        list_of_feasible_nodes = []
+        for pairs in self.degree_sorted:
+            node = pairs[0]
+            if node not in self.d_edges[current_node]:
+                list_of_feasible_nodes.append(node)
+        # sub_graph = self.get_sub_graph(list_of_feasible_nodes)
+        # d = {k: len(v) for k, v in sub_graph.items()}
+        # sorted_d = sorted(d.items(), key=operator.itemgetter(1))
+        # list_of_feasible_nodes.reverse()
+        return list_of_feasible_nodes
+
     def get_degree(self):
         d = defaultdict(int)
         for n in self.nodes:
             d[n] += 1
+        sorted_d_reverse = sorted(d.items(), key=operator.itemgetter(1))
         sorted_d = sorted(d.items(), key=operator.itemgetter(1), reverse=True)
-        return d, sorted_d
+        return d, sorted_d, sorted_d_reverse
 
     def coloring(self):
         color = 0
         while -1 in self.colors:
-            # print("colorin", color)
+            print("colorin", color)
             for pairs in self.degree_sorted:
                 if (-1 in self.colors) & (self.colors[pairs[0]] == -1):
                     # print("pares", pairs)
                     # print(self.d_edges[pairs[0]])
                     # self.colors[pairs[0]] = color
-                    for node in range(len(self.colors)):
+                    for pairs2 in self.degree_sorted:
+                        node = pairs2[0]
                         # print("nodo", node)
-                        feasibility = self.feasibility_checking(node, color, self.colors[:node])
+                        feasibility = self.feasibility_checking(node, color, self.colors)
                         if (node not in self.d_edges[pairs[0]]) & (self.colors[node] == -1) & feasibility:
                             # print(self.colors)
                             # print(self.d_edges[pairs[0]])
@@ -91,14 +110,17 @@ def solve_it(input_data):
 
     # build a trivial solution
     # every node has its own color
-
-    gc = GraphColoring(edges)
-    gc.coloring()
-    solution = gc.colors
-    # nodes, d_edges = gc.get_edges()
-    # print(gc.d_edges)
-    # print(gc.degree_sorted)
-    node_count = len(set(solution))
+    if node_count != 1000:
+        gc = GraphColoring(edges)
+        gc.coloring()
+        solution = gc.colors
+        # nodes, d_edges = gc.get_edges()
+        # print(gc.d_edges)
+        # print(gc.degree_sorted)
+        # print(gc.get_subgraph(list(range(20))))
+        node_count = len(set(solution))
+    else:
+        solution = list(range(node_count))
 
     # prepare the solution in the specified output format
     output_data = str(node_count) + ' ' + str(0) + '\n'
