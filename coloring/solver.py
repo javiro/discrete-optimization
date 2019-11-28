@@ -67,6 +67,91 @@ class GraphColoring(object):
         pass
 
 
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# from typing import Generic, TypeVar, Dict, List, Optional
+# from abc import ABC, abstractmethod
+
+# V = TypeVar('V')  # variable type
+# D = TypeVar('D')  # domain type
+
+
+# Base class for all constraints
+class Constraint(object):
+    # The variables that the constraint is between
+    def __init__(self, variables):
+        self.variables = variables
+
+    # Must be overridden by subclasses
+    def satisfied(self, assignment):
+        raise NotImplementedError('subclasses must override satisfied()!')
+
+
+# A constraint satisfaction problem consists of variables of type V
+# that have ranges of values known as domains of type D and constraints
+# that determine whether a particular variable's domain selection is valid
+class CSP(object):
+    def __init__(self, variables, domains):
+        self.variables = variables # variables to be constrained
+        self.domains = domains # domain of each variable
+        self.constraints = {}
+        for variable in self.variables:
+            self.constraints[variable] = []
+            if variable not in self.domains:
+                raise LookupError("Every variable should have a domain assigned to it.")
+
+    def add_constraint(self, constraint):
+        for variable in constraint.variables:
+            if variable not in self.variables:
+                raise LookupError("Variable in constraint not in CSP")
+            else:
+                self.constraints[variable].append(constraint)
+
+    # Check if the value assignment is consistent by checking all constraints
+    # for the given variable against it
+    def consistent(self, variable, assignment):
+        for constraint in self.constraints[variable]:
+            if not constraint.satisfied(assignment):
+                return False
+        return True
+
+    def backtracking_search(self, assignment={}):
+        # assignment is complete if every variable is assigned (our base case)
+        if len(assignment) == len(self.variables):
+            return assignment
+        # get all variables in the CSP but not in the assignment
+        unassigned = [v for v in self.variables if v not in assignment]
+        # get the every possible domain value of the first unassigned variable
+
+        first = unassigned[0]
+        for value in self.domains[first]:
+            local_assignment = assignment.copy()
+            local_assignment[first] = value
+            # if we're still consistent, we recurse (continue)
+            if self.consistent(first, local_assignment):
+                result = self.backtracking_search(local_assignment)
+                # if we didn't find the result, we will end up backtracking
+                if result is not None:
+                        return result
+        return None
+
+
+class MapColoringConstraint(object):
+    def __init__(self, place1, place2):
+        self.variables = [place1, place2]
+        self.place1 = place1
+        self.place2 = place2
+
+    def satisfied(self, assignment):
+        # If either place is not in the assignment, then it is not
+        # yet possible for their colors to be conflicting
+        if self.place1 not in assignment or self.place2 not in assignment:
+            return True
+        # check the color assigned to place1 is not the same as the
+        # color assigned to place2
+        return assignment[self.place1] != assignment[self.place2]
+
+
 def solve_it(input_data):
     # Modify this code to run your optimization algorithm
 
@@ -85,17 +170,27 @@ def solve_it(input_data):
 
     # build a trivial solution
     # every node has its own color
-
     gc = GraphColoring(edges)
-    gc.coloring()
-    solution = gc.colors
     nodes, d_edges = gc.get_edges()
+
+    variables = list(set(nodes))
+    domains = {}
+    for variable in variables:
+        domains[variable] = list(range(7))
+
+    csp = CSP(variables, domains)
+    for e in edges:
+        csp.add_constraint(MapColoringConstraint(e[0], e[1]))
+
+    dict_solution = csp.backtracking_search()
+    node_count = len(set(dict_solution.values()))
+    # nodes, d_edges = gc.get_edges()
     # print(gc.d_edges)
     # print(gc.degree_sorted)
 
     # prepare the solution in the specified output format
     output_data = str(node_count) + ' ' + str(0) + '\n'
-    output_data += ' '.join(map(str, solution))
+    output_data += ' '.join(map(str, dict_solution.values()))
 
     return output_data
 
