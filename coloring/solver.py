@@ -4,6 +4,8 @@
 
 import operator
 from collections import defaultdict
+import random
+import sys
 
 
 class GraphColoring(object):
@@ -84,6 +86,59 @@ class GraphColoring(object):
                     return False
         return True
 
+    def feasibility_checking2(self):
+        """
+        A constraint checks if it can be satisfied given the values in the domains of its variables.
+        :return:
+        """
+        for node in range(len(self.colors)):
+            if self.colors[node] not in [self.colors[i] for i in self.d_edges[node]]:
+                return True
+            else:
+                return False
+
+    def get_num_violations(self):
+        """
+
+        :return:
+        """
+        v = 0
+        d = {}
+        for node in range(len(self.colors)):
+            node_violations = [self.colors[i] for i in self.d_edges[node]].count(self.colors[node])
+            v += node_violations
+            if node_violations > 0:
+                d[node] = node_violations
+        return v, d
+
+    def recalculate_solution(self, solution):
+        iter = 0
+        while self.get_num_violations()[0] > 0:
+            if iter > 1000:
+                print("No feasible solution {}: {}".format(iter, self.get_num_violations()[0]))
+                self.colors = solution
+                self.remove_one_color()
+                break
+            iter += 1
+            v_ini, d_ini = self.get_num_violations()
+            sorted_d = sorted(d_ini.items(), key=operator.itemgetter(1), reverse=True)
+            color_ini = self.colors[sorted_d[0][0]]
+            colors = list(set(self.colors))
+            for color in colors:
+                self.colors[sorted_d[0][0]] = color
+                v, d = self.get_num_violations()
+                if v <= v_ini:
+                    v_ini, d_ini = self.get_num_violations()
+                    color_ini = self.colors[sorted_d[0][0]]
+                else:
+                    self.colors[sorted_d[0][0]] = color_ini
+
+    def remove_one_color(self):
+        colors = list(set(self.colors))
+        color = random.choice(colors)
+        colors.remove(color)
+        self.colors = [c if c != color else random.choice(colors) for c in self.colors]
+
     def pruning(self):
         """
         A constraint determines which values in the domains cannot be part of any solution.
@@ -114,6 +169,20 @@ def solve_it(input_data):
         gc = GraphColoring(edges)
         gc.coloring()
         solution = gc.colors
+        # gc.remove_one_color()
+        print(len(set(gc.colors)))
+        print(gc.feasibility_checking2())
+        v, d = gc.get_num_violations()
+        print(d)
+        while len(set(solution)) > 7:
+            gc.remove_one_color()
+            gc.recalculate_solution(solution)
+
+        # gc.recalculate_solution()
+        print(v)
+        v, d = gc.get_num_violations()
+        print(d)
+        print(v)
         # nodes, d_edges = gc.get_edges()
         # print(gc.d_edges)
         # print(gc.degree_sorted)
