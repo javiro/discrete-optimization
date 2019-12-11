@@ -93,7 +93,7 @@ def get_neighbour(route, num):
 
 def metropolis(points, solution, nodeCount, t):
     solution_length = calculate_tour_length(points, solution, nodeCount)
-    random_state = generate_new_solution_k(solution, 2)
+    random_state = generate_new_solution(solution)
     tour_length = calculate_tour_length(points, random_state, nodeCount)
     if tour_length <= solution_length:
         solution = random_state
@@ -116,7 +116,7 @@ def iterated_local_search_2_opt(points, nodeCount, num_iteration):
         if tour_length <= solution_length:
             solution_length = tour_length
             solution = solution2
-        random_state = generate_new_solution_k(solution2, 3)
+        random_state = generate_new_solution(solution2)
     return solution
 
 
@@ -128,12 +128,6 @@ def generate_new_solution(solution2):
     route_reversed.reverse()
     output_route[pair[0]:pair[1]] = route_reversed
     return output_route
-
-
-def generate_new_solution_k(solution2, k):
-    for i in range(k):
-        solution2 = generate_new_solution(solution2)
-    return solution2
 
 
 def iterated_local_search_2_opt_metropolis(solution, points, nodeCount, num_iteration, t, d):
@@ -305,31 +299,27 @@ def solve_it(input_data):
     # solution = greedy_closest_node(points, solution, nodeCount)
     # solution = random.sample(list(range(0, nodeCount)), nodeCount)
     if nodeCount != 33810:
-        if nodeCount <= 200:
+        if nodeCount <= 100:
             distance, d = tree_catalogue.query(points, 100)
-            t_initial = 100
-            length_sa = 10
+            t_initial = 1000
+            length_sa = 100
             num_iteration = 10
             num_of_restarts = 5
-            solution = iterated_local_search_2_opt(points, nodeCount, 500)
-            # solution = two_opt(solution, points)
-            # solution = restart_sa(points, solution, nodeCount, t_initial, length_sa, num_iteration, num_of_restarts, d)
+            solution = restart_sa(points, solution, nodeCount, t_initial, length_sa, num_iteration, num_of_restarts, d)
         else:
-            distance, d = tree_catalogue.query(points, 50)
-            t_initial = 100
+            distance, d = tree_catalogue.query(points, 100)
+            t_initial = 10000
             length_sa = 10
             num_iteration = 10
-            # solution = iterated_local_search_2_opt(points, nodeCount, 100)
             solution = list(range(0, nodeCount))
             solution = two_opt(solution, points)
-            # solution = simulated_annealing(points, solution, nodeCount, t_initial, length_sa, num_iteration, d)
+            solution = simulated_annealing(points, solution, nodeCount, t_initial, length_sa, num_iteration, d)
     else:
-        solution = list(range(0, nodeCount))
-        distance, d = tree_catalogue.query(points, 150)
+        distance, d = tree_catalogue.query(points, 100)
         t_initial = 100
         length_sa = 10
         num_iteration = 5
-        # solution = simulated_annealing(points, solution, nodeCount, t_initial, length_sa, num_iteration, d)
+        solution = simulated_annealing(points, solution, nodeCount, t_initial, length_sa, num_iteration, d)
     # solution = restart_sa(points, solution, nodeCount, t_initial, length_sa, 10, num_of_restarts, 'ooo')
     # else:
     #     sol = list(zip(list(range(0, nodeCount)), points))

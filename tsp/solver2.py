@@ -30,8 +30,8 @@ def get_t_interval(upper, length):
 
 
 def simulated_annealing(points, solution, nodeCount, t_initial, length, num_iteration, d):
-    interval = get_t_interval(t_initial, length)
-    # solution = random.sample(list(range(nodeCount)), nodeCount)
+    interval = list(get_t_interval(t_initial, length))
+    solution = random.sample(list(range(nodeCount)), nodeCount)
     for t in interval:
         print(t)
         # solution = metropolis(points, solution, nodeCount, num_iteration, t)
@@ -93,7 +93,7 @@ def get_neighbour(route, num):
 
 def metropolis(points, solution, nodeCount, t):
     solution_length = calculate_tour_length(points, solution, nodeCount)
-    random_state = generate_new_solution_k(solution, 2)
+    random_state = generate_new_solution(solution)
     tour_length = calculate_tour_length(points, random_state, nodeCount)
     if tour_length <= solution_length:
         solution = random_state
@@ -105,18 +105,18 @@ def metropolis(points, solution, nodeCount, t):
     return solution
 
 
-def iterated_local_search_2_opt(points, nodeCount, num_iteration):
+def iterated_local_search_2_opt(points, nodeCount, num_iteration, d):
     solution = list(range(nodeCount))
     random_state = random.sample(solution, len(solution))
     solution_length = calculate_tour_length(points, solution, nodeCount)
     for i in range(num_iteration):
         print(i, solution_length)
-        solution2 = two_opt(random_state, points)
+        solution2 = two_opt(random_state, points, d)
         tour_length = calculate_tour_length(points, solution2, nodeCount)
         if tour_length <= solution_length:
             solution_length = tour_length
             solution = solution2
-        random_state = generate_new_solution_k(solution2, 3)
+        random_state = generate_new_solution(solution2)
     return solution
 
 
@@ -130,47 +130,17 @@ def generate_new_solution(solution2):
     return output_route
 
 
-def generate_new_solution_k(solution2, k):
-    for i in range(k):
-        solution2 = generate_new_solution(solution2)
-    return solution2
-
-
 def iterated_local_search_2_opt_metropolis(solution, points, nodeCount, num_iteration, t, d):
     solution_length = calculate_tour_length(points, solution, nodeCount)
     for i in range(num_iteration):
         random_state = metropolis(points, solution, nodeCount, t)
-        solution2 = two_opt_metropolis(random_state, points, d)
+        solution2 = two_opt(random_state, points, d)
         tour_length = calculate_tour_length(points, solution2, nodeCount)
         print(tour_length)
         if tour_length <= solution_length:
             solution_length = tour_length
             solution = solution2
     return solution
-
-
-def reverse_segment_if_better_metropolis(points, tour, j, k):
-    """If reversing tour[i:j] would make the tour shorter, then do it.
-    d(t1, t2)+d(t3, t4) > d(t2,t4)+d(t1, t3). I.e. distance d(t2, t4)
-    can't be too large for such a move to be actually
-    useful. Thus, I would only examine candidate t4's that are not too far from t2,"""
-    # Given tour [...A-B...C-D...E-F...]
-    C, D, E, F = tour[j-1], tour[j], tour[k-1], tour[k % len(tour)]
-    d0 = length(points[C], points[D]) + length(points[E], points[F])
-    d2 = length(points[C], points[E]) + length(points[D], points[F])
-    if d0 > d2:
-        tour[j:k] = reversed(tour[j:k])
-
-
-def two_opt_metropolis(tour, points, d):
-    """Iterative improvement based on 3 exchange."""
-    for (b, c) in all_segments_k(len(tour), d):
-        reverse_segment_if_better_metropolis(points, tour, b, c)
-    return tour
-
-
-def all_segments_k(n, d):
-    return ((i, j) for i in range(n) for j in d[i])
 
 # ###################################
 
@@ -206,21 +176,14 @@ def reverse_segment_if_better(points, tour, j, k):
     C, D, E, F = tour[j-1], tour[j], tour[k-1], tour[k % len(tour)]
     d0 = length(points[C], points[D]) + length(points[E], points[F])
     d2 = length(points[C], points[E]) + length(points[D], points[F])
-
     if d0 > d2:
         tour[j:k] = reversed(tour[j:k])
-        return -d0 + d2
-    return 0
 
 
-def two_opt(tour, points):
+def two_opt(tour, points, d):
     """Iterative improvement based on 3 exchange."""
-    while True:
-        delta = 0
-        for (b, c) in all_segments(len(tour)):
-            delta += reverse_segment_if_better(points, tour, b, c)
-        if delta >= 0:
-            break
+    for (b, c) in all_segments_k(len(tour), d):
+        reverse_segment_if_better(points, tour, b, c)
     return tour
 
 
@@ -305,31 +268,19 @@ def solve_it(input_data):
     # solution = greedy_closest_node(points, solution, nodeCount)
     # solution = random.sample(list(range(0, nodeCount)), nodeCount)
     if nodeCount != 33810:
-        if nodeCount <= 200:
-            distance, d = tree_catalogue.query(points, 100)
-            t_initial = 100
-            length_sa = 10
+        distance, d = tree_catalogue.query(points, 50)
+        solution = two_opt(solution, points, d)
+        if nodeCount <= 100:
+            t_initial = 1000
+            length_sa = 100
             num_iteration = 10
-            num_of_restarts = 5
-            solution = iterated_local_search_2_opt(points, nodeCount, 500)
-            # solution = two_opt(solution, points)
-            # solution = restart_sa(points, solution, nodeCount, t_initial, length_sa, num_iteration, num_of_restarts, d)
-        else:
-            distance, d = tree_catalogue.query(points, 50)
-            t_initial = 100
-            length_sa = 10
-            num_iteration = 10
-            # solution = iterated_local_search_2_opt(points, nodeCount, 100)
-            solution = list(range(0, nodeCount))
-            solution = two_opt(solution, points)
-            # solution = simulated_annealing(points, solution, nodeCount, t_initial, length_sa, num_iteration, d)
     else:
-        solution = list(range(0, nodeCount))
-        distance, d = tree_catalogue.query(points, 150)
+        distance, d = tree_catalogue.query(points, 50)
         t_initial = 100
         length_sa = 10
         num_iteration = 5
-        # solution = simulated_annealing(points, solution, nodeCount, t_initial, length_sa, num_iteration, d)
+
+    solution = simulated_annealing(points, solution, nodeCount, t_initial, length_sa, num_iteration, d)
     # solution = restart_sa(points, solution, nodeCount, t_initial, length_sa, 10, num_of_restarts, 'ooo')
     # else:
     #     sol = list(zip(list(range(0, nodeCount)), points))
