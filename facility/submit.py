@@ -23,6 +23,14 @@ try:
     from urllib.parse import urlparse, urlencode
     from urllib.request import urlopen, Request
     from urllib.error import HTTPError
+
+    from collections import namedtuple
+    import math
+    from datetime import datetime
+    import pdb
+    import numpy
+    from ortools.linear_solver import pywraplp
+    import pyscipopt
 except:
     pass
 
@@ -203,6 +211,7 @@ def output(input_file, solver_file):
     '''
 
     try:
+        print(input_file)
         pkg = __import__(solver_file[:-3]) # remove '.py' extension
         if not hasattr(pkg, 'solve_it'):
             print('the solve_it() function was not found in %s' % solver_file)
